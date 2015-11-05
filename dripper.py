@@ -1,7 +1,8 @@
 __author__ = 'normunds'
 
 from mailchimp import Mailchimp
-from mongoengine import connect, Document, IntField, StringField, BooleanField, ListField
+from mongoengine import connect, Document, IntField, StringField, BooleanField, ListField, \
+    ObjectIdField, DateTimeField, EmbeddedDocument, EmbeddedDocumentField
 import re
 from BeautifulSoup import BeautifulSoup as soup
 
@@ -20,6 +21,38 @@ class Template(Document):
     source = StringField()
     links = ListField(StringField())
     active = BooleanField()
+
+
+class DripCampaign(Document):
+    shop_url = StringField()
+    name = StringField()
+    description = StringField()
+    list_id = StringField()
+    active = BooleanField()
+
+
+class Content(EmbeddedDocument):
+    template_id = IntField()
+    subject = StringField()
+    from_mail = StringField()
+    to_mail = StringField()
+
+
+class Node(Document):
+    drip_campaign_id = ObjectIdField()
+    title = StringField()
+    description = StringField()
+    done = BooleanField()
+    process_time = DateTimeField()
+    content = EmbeddedDocumentField(Content)
+
+
+class Trigger(Document):
+    drip_campaign_id = ObjectIdField()
+    node_from = ObjectIdField()
+    node_to = ObjectIdField()
+    opened = BooleanField()
+    clicked = StringField()
 
 
 class MailchimpWrapper:
@@ -140,6 +173,33 @@ class DataCaptain:
                 return
         self.folder_id = self.mw.create_folder(self.FOLDER_NAME)
 
+    def create_drip_campaign(self, name, list_id, description=None):
+        """
+        save drip campaign to mongo
+        return id
+        """
+        new_drip_campaign = DripCampaign(
+            shop_url=self.shop_url,
+            name=name,
+            list_id=list_id,
+            description=description,
+            active=False,
+        )
+        new_drip_campaign.save()
+        return new_drip_campaign.id
+
+    def activate_drip_campaign(self, id):
+        """
+        set campaign with given id to active
+        """
+        DripCampaign.objects(id=id).update(set__active=True)
+
+    def deactivate_drip_campaign(self, id):
+        """
+        set campaign with given id to inactive
+        """
+        DripCampaign.objects(id=id).update(set__active=False)
+
 
 if __name__ == "__main__":
     api_key = "71f28cb5b4859b0103b2197bfef430c1-us12"
@@ -154,3 +214,8 @@ if __name__ == "__main__":
     dc.update_templates()
     dc.get_folder()
     print dc.folder_id
+
+    id = dc.create_drip_campaign("newCampaignYo", "some_list", "some description lol")
+    dc.activate_drip_campaign(id)
+    dc.deactivate_drip_campaign(id)
+    print id, type(id)
