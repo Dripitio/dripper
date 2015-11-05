@@ -35,7 +35,7 @@ class Content(EmbeddedDocument):
     template_id = IntField()
     subject = StringField()
     from_mail = StringField()
-    to_mail = StringField()
+    from_name = StringField()
 
 
 class Node(Document):
@@ -43,8 +43,9 @@ class Node(Document):
     title = StringField()
     description = StringField()
     done = BooleanField()
-    process_time = DateTimeField()
+    start_time = DateTimeField()
     content = EmbeddedDocumentField(Content)
+    initial = BooleanField()
 
 
 class Trigger(Document):
@@ -176,7 +177,7 @@ class DataCaptain:
     def create_drip_campaign(self, name, list_id, description=None):
         """
         save drip campaign to mongo
-        return id
+        return object id
         """
         new_drip_campaign = DripCampaign(
             shop_url=self.shop_url,
@@ -200,6 +201,39 @@ class DataCaptain:
         """
         DripCampaign.objects(id=id).update(set__active=False)
 
+    def create_node(self, drip_campaign_id, title, start_time, template_id, subject, from_mail, from_name, initial,
+                    description=None):
+        """
+        create a single drip campaign node, save to mongo
+        return object id
+        """
+        new_content = Content(template_id=template_id, subject=subject, from_mail=from_mail, from_name=from_name)
+        new_node = Node(
+            drip_campaign_id=drip_campaign_id,
+            title=title,
+            start_time=start_time,
+            description=description,
+            content=new_content,
+            initial=initial,
+            done=False,
+        )
+        new_node.save()
+        return new_node.id
+
+    def create_trigger(self, drip_campaign_id, node_from, node_to, opened, clicked):
+        """
+        create a single drip campaign trigger link, save to mongo
+        """
+        new_trigger = Trigger(
+            drip_campaign_id=drip_campaign_id,
+            node_from=node_from,
+            node_to=node_to,
+            opened=opened,
+            clicked=clicked,
+        )
+        new_trigger.save()
+
+
 
 if __name__ == "__main__":
     api_key = "71f28cb5b4859b0103b2197bfef430c1-us12"
@@ -219,3 +253,13 @@ if __name__ == "__main__":
     dc.activate_drip_campaign(id)
     dc.deactivate_drip_campaign(id)
     print id, type(id)
+
+    import datetime
+    id1 = dc.create_node(id, "first node", datetime.datetime(2015, 12, 1), 12321, "Hi there!",
+                         "donald@duck.com", "Donald Duck", True, "describe describe")
+    id2 = dc.create_node(id, "second node", datetime.datetime(2015, 12, 10), 22222, "Hi there again!",
+                         "donald@duck.com", "Donald Duck", False, "describe describe")
+
+    dc.create_trigger(id, id1, id2, True, None)
+    dc.create_trigger(id, id1, id2, False, None)
+    dc.create_trigger(id, id1, id2, None, "ass.com")
