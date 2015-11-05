@@ -1,6 +1,8 @@
-from model import List, Template, DripCampaign, Node, Content, Trigger
 import re
+
 from BeautifulSoup import BeautifulSoup as soup
+
+from backend.model import List, Template, DripCampaign, Node, Content, Trigger
 
 
 class DataCaptain:

@@ -1,6 +1,7 @@
 import mongoengine
-from data_camptain import DataCaptain
-from mailchimp_wrapper import MailchimpWrapper
+
+from backend.data_camptain import DataCaptain
+from backend.mailchimp_wrapper import MailchimpWrapper
 
 
 if __name__ == "__main__":
