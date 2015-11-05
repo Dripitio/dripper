@@ -1,6 +1,6 @@
 import mongoengine
 
-from backend.data_camptain import DataCaptain
+from backend.data_captain import DataCaptain
 from backend.mailchimp_wrapper import MailchimpWrapper
 
 
