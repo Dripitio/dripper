@@ -27,18 +27,46 @@ class MailchimpWrapper:
         self.mc = Mailchimp(api_key)
 
     def get_lists(self):
+        """
+        returns list of lists
+        each list is described by a dict of name and list_id
+        """
         return [{"name": lst["name"], "list_id": lst["id"]}
                 for lst in self.mc.lists.list()["data"]]
 
     def get_templates(self):
+        """
+        returns list of templates
+        each template is described by a dict of name and template_id
+        """
         return [{"name": tmplt["name"], "template_id": tmplt["id"]}
                 for tmplt in self.mc.templates.list(filters={"include_drag_and_drop": True})["user"]]
 
+    def get_folders(self):
+        """
+        returns list of folders
+        each folder is described by a dict of name and folder_id
+        """
+        return [{"name": fldr["name"], "folder_id": fldr["folder_id"]}
+                for fldr in self.mc.folders.list("campaign")]
+
     def get_template_source(self, template_id):
+        """
+        given template_id get source of template
+        """
         return self.mc.templates.info(template_id)["source"]
+
+    def create_folder(self, name):
+        """
+        create folder with name `name` and return folder_id
+        """
+        return self.mc.folders.add(name, "campaign")["folder_id"]
 
 
 class DataCaptain:
+
+    FOLDER_NAME = "DripCampaignWorkFolder"
+
     def __init__(self, shop_url, mailchimp_wrapper):
         self.shop_url = shop_url
         self.mw = mailchimp_wrapper
@@ -100,6 +128,18 @@ class DataCaptain:
                 all_links.add(urls[0])
         return sorted(list(all_links))
 
+    def get_folder(self):
+        """
+        get folder id to work with
+        in case folder doesn't exist (new user) create it
+        """
+        folders = self.mw.get_folders()
+        for fldr in folders:
+            if fldr["name"] == self.FOLDER_NAME:
+                self.folder_id = fldr["folder_id"]
+                return
+        self.folder_id = self.mw.create_folder(self.FOLDER_NAME)
+
 
 if __name__ == "__main__":
     api_key = "71f28cb5b4859b0103b2197bfef430c1-us12"
@@ -112,3 +152,5 @@ if __name__ == "__main__":
 
     dc.update_lists()
     dc.update_templates()
+    dc.get_folder()
+    print dc.folder_id
