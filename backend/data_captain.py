@@ -2,7 +2,7 @@ import re
 
 from BeautifulSoup import BeautifulSoup as soup
 
-from backend.model import List, Template, DripCampaign, Node, Content, Trigger
+from backend.model import List, Template, DripCampaign, Node, Content, Trigger, Member
 
 
 class DataCaptain:
@@ -29,7 +29,7 @@ class DataCaptain:
         List.objects(list_id__in=list(previous_list_ids&current_list_ids)).delete()
         # save all new lsits
         for lst in current_lists:
-            new_list = List(shop_url=self.shop_url, name=lst["name"], list_id=lst["list_id"], active=True)
+            new_list = List(shop_url=self.shop_url, name=lst["name"], list_id=lst["list_id"], active=True, members=[])
             new_list.save()
 
     def update_templates(self):
@@ -140,3 +140,15 @@ class DataCaptain:
             clicked=clicked,
         )
         new_trigger.save()
+
+    def fetch_members_from_list(self, list_id):
+        """
+        gets all members from given list
+        saves to mongo
+        updates member list for list_id
+        """
+        def save_member(mbr):
+            Member.objects(member_id=mbr["member_id"]).update_one(upsert=True, set__email=mbr["email"])
+            return mbr["member_id"]
+        member_object_ids = [save_member(mbr) for mbr in self.mw.get_members(list_id)]
+        List.objects(list_id=list_id).update(set__members=member_object_ids)

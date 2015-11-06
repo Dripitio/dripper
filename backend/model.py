@@ -7,6 +7,7 @@ class List(Document):
     name = StringField()
     list_id = StringField()
     active = BooleanField()
+    members = ListField(StringField())
 
 
 class Template(Document):
@@ -49,3 +50,8 @@ class Trigger(Document):
     node_to = ObjectIdField()
     opened = BooleanField()
     clicked = StringField()
+
+
+class Member(Document):
+    email = StringField()
+    member_id = StringField()

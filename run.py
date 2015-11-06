@@ -32,3 +32,5 @@ if __name__ == "__main__":
     dc.create_trigger(id, id1, id2, True, None)
     dc.create_trigger(id, id1, id2, False, None)
     dc.create_trigger(id, id1, id2, None, "ass.com")
+
+    dc.fetch_members_from_list("9f67333bf5")

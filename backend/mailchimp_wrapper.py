@@ -40,3 +40,11 @@ class MailchimpWrapper:
         create folder with name `name` and return folder_id
         """
         return self.mc.folders.add(name, "campaign")["folder_id"]
+
+    def get_members(self, list_id):
+        """
+        returns list of members of given list
+        each member is described by a dict of email address and member_id
+        """
+        return [{"email": mbr["email"], "member_id": mbr["id"]}
+                for mbr in self.mc.lists.members(list_id)["data"]]
