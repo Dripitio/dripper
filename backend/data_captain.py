@@ -2,11 +2,13 @@ import re
 
 from BeautifulSoup import BeautifulSoup as soup
 
-from backend.model import List, Template, DripCampaign, Node, Content, Trigger, Member
+from backend.model import List, Template, DripCampaign, Node, Content, Trigger, \
+    Member, Segment
 
 
 class DataCaptain:
 
+    PREFIX = "REACHLY"
     FOLDER_NAME = "DripCampaignWorkFolder"
 
     def __init__(self, shop_url, mailchimp_wrapper):
@@ -29,7 +31,8 @@ class DataCaptain:
         List.objects(list_id__in=list(previous_list_ids&current_list_ids)).delete()
         # save all new lsits
         for lst in current_lists:
-            new_list = List(shop_url=self.shop_url, name=lst["name"], list_id=lst["list_id"], active=True, members=[])
+            new_list = List(shop_url=self.shop_url, name=lst["name"], list_id=lst["list_id"], active=True,
+                            members_euid=[])
             new_list.save()
 
     def update_templates(self):
@@ -75,12 +78,13 @@ class DataCaptain:
         get folder id to work with
         in case folder doesn't exist (new user) create it
         """
+        name = "%s_%s" % (self.PREFIX, self.FOLDER_NAME)
         folders = self.mw.get_folders()
         for fldr in folders:
-            if fldr["name"] == self.FOLDER_NAME:
+            if fldr["name"] == name:
                 self.folder_id = fldr["folder_id"]
                 return
-        self.folder_id = self.mw.create_folder(self.FOLDER_NAME)
+        self.folder_id = self.mw.create_folder(name)
 
     def create_drip_campaign(self, name, list_id, description=None):
         """
@@ -108,6 +112,12 @@ class DataCaptain:
         set campaign with given id to inactive
         """
         DripCampaign.objects(id=id).update(set__active=False)
+
+    def get_drip_campaigns(self):
+        """
+        return list of all drip campaigns for this shop
+        """
+        return list(DripCampaign.objects(shop_url=self.shop_url))
 
     def create_node(self, drip_campaign_id, title, start_time, template_id, subject, from_mail, from_name, initial,
                     description=None):
@@ -141,7 +151,7 @@ class DataCaptain:
         )
         new_trigger.save()
 
-    def fetch_members_from_list(self, list_id):
+    def fetch_members_for_list(self, list_id):
         """
         gets all members from given list
         saves to mongo
@@ -150,5 +160,29 @@ class DataCaptain:
         def save_member(mbr):
             Member.objects(member_id=mbr["member_id"]).update_one(upsert=True, set__email=mbr["email"])
             return mbr["member_id"]
-        member_object_ids = [save_member(mbr) for mbr in self.mw.get_members(list_id)]
-        List.objects(list_id=list_id).update(set__members=member_object_ids)
+        members_euid = [save_member(mbr) for mbr in self.mw.get_members(list_id)]
+        List.objects(list_id=list_id).update(set__members_euid=members_euid)
+
+    def form_segment(self, node_oid, list_id):
+        """
+        for given drip campaign node in the context of list list_id
+        get the set of applicable members for this node
+        and create a segment based on it
+        there are two cases:
+        1. node is initial node - then the segment is the whole list
+        2. node is not initial node - gather the set based on segments of
+           previous nodes by applying the trigger filters
+        """
+        new_segment = Segment()
+        new_segment.save()
+        name = "%s_seg_%s" % (self.PREFIX, new_segment.id)
+        node = Node.objects(id=node_oid)[0]
+        node.update(set__segment_id=new_segment.id)
+        if node["initial"]:
+            euids = List.objects(list_id=list_id)[0]["members_euid"]
+            segment_id = self.mw.create_segment(list_id, name)
+            self.mw.update_segment_members(list_id, segment_id, euids)
+            new_segment.update(set__segment_id=segment_id, set__name=name, members_euid=euids)
+        else:
+            # TODO: shut the fuck up and fucking do it
+            pass

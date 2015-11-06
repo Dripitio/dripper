@@ -48,3 +48,26 @@ class MailchimpWrapper:
         """
         return [{"email": mbr["email"], "member_id": mbr["id"]}
                 for mbr in self.mc.lists.members(list_id)["data"]]
+
+    def create_segment(self, list_id, name):
+        """
+        create a new, empty static segment for list list_id with name name
+        return segment id
+        """
+        return self.mc.lists.static_segment_add(list_id, name)["id"]
+
+    def delete_segment(self, list_id, segment_id):
+        """
+        delete segment segment segment_id for list list_id
+        """
+        self.mc.lists.static_segment_del(list_id, segment_id)
+
+    def update_segment_members(self, list_id, segment_id, euids):
+        """
+        given batch of members
+        sets it to the members in segment segment_id of list list_id
+        ignore return
+        """
+        self.mc.lists.static_segment_reset(list_id, segment_id)
+        formatted_euids = [{"euid": euid} for euid in euids]
+        self.mc.lists.static_segment_members_add(list_id, segment_id, formatted_euids)

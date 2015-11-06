@@ -7,7 +7,7 @@ class List(Document):
     name = StringField()
     list_id = StringField()
     active = BooleanField()
-    members = ListField(StringField())
+    members_euid = ListField(StringField())
 
 
 class Template(Document):
@@ -42,6 +42,7 @@ class Node(Document):
     start_time = DateTimeField()
     content = EmbeddedDocumentField(Content)
     initial = BooleanField()
+    segment_id = ObjectIdField()
 
 
 class Trigger(Document):
@@ -55,3 +56,9 @@ class Trigger(Document):
 class Member(Document):
     email = StringField()
     member_id = StringField()
+
+
+class Segment(Document):
+    segment_id = IntField()
+    name = StringField()
+    members_euid = ListField(StringField())
