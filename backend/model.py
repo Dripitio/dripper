@@ -30,7 +30,7 @@ class DripCampaign(Document):
 class Content(EmbeddedDocument):
     template_id = IntField()
     subject = StringField()
-    from_mail = StringField()
+    from_email = StringField()
     from_name = StringField()
 
 
@@ -42,7 +42,8 @@ class Node(Document):
     start_time = DateTimeField()
     content = EmbeddedDocumentField(Content)
     initial = BooleanField()
-    segment_id = ObjectIdField()
+    segment_oid = ObjectIdField()
+    campaign_id = StringField()
 
 
 class Trigger(Document):

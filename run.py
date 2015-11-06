@@ -19,6 +19,7 @@ if __name__ == "__main__":
     print dc.folder_id
 
     list_id = "9f67333bf5"
+    template_id = 5985
 
     dc.fetch_members_for_list(list_id)
 
@@ -34,10 +35,10 @@ if __name__ == "__main__":
     print camp_id, type(camp_id)
 
     import datetime
-    id1 = dc.create_node(camp_id, "first node", datetime.datetime(2015, 12, 1), 12321, "Hi there!",
-                         "donald@duck.com", "Donald Duck", True, "describe describe")
-    id2 = dc.create_node(camp_id, "second node", datetime.datetime(2015, 12, 10), 22222, "Hi there again!",
-                         "donald@duck.com", "Donald Duck", False, "describe describe")
+    id1 = dc.create_node(camp_id, "first node", datetime.datetime(2015, 12, 1), template_id, "Hi there!",
+                         "normunds@reach.ly", "Donald Duck", True, "describe describe")
+    id2 = dc.create_node(camp_id, "second node", datetime.datetime(2015, 12, 10), template_id, "Hi there again!",
+                         "normunds@reach.ly", "Donald Duck", False, "describe describe")
 
     dc.create_trigger(camp_id, id1, id2, True, None)
     dc.create_trigger(camp_id, id1, id2, False, None)
@@ -52,3 +53,7 @@ if __name__ == "__main__":
     s.save()
     print s
     print s.id, type(s.id)
+
+    camp_id = dc.create_node_campaign(id1, list_id)
+
+

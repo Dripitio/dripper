@@ -71,3 +71,24 @@ class MailchimpWrapper:
         self.mc.lists.static_segment_reset(list_id, segment_id)
         formatted_euids = [{"euid": euid} for euid in euids]
         self.mc.lists.static_segment_members_add(list_id, segment_id, formatted_euids)
+
+    def create_campaign(self, list_id, segment_id, template_id, subject, from_email, from_name, folder_id=None):
+        """
+        create mailchimp campaign for given list, segment, template, etc.
+        optionally can pass which folder to save it in (folder_id)
+        return campaign id
+        """
+        options = {
+            "list_id": list_id,
+            "subject": subject,
+            "from_email": from_email,
+            "from_name": from_name,
+            "template_id": template_id,
+        }
+        if folder_id is not None:
+            options["folder_id"] = folder_id
+        segment_opts = {
+            "saved_segment_id": segment_id,
+        }
+        response = self.mc.campaigns.create("regular", options, {}, segment_opts)
+        return response["id"]

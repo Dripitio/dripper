@@ -119,13 +119,13 @@ class DataCaptain:
         """
         return list(DripCampaign.objects(shop_url=self.shop_url))
 
-    def create_node(self, drip_campaign_id, title, start_time, template_id, subject, from_mail, from_name, initial,
+    def create_node(self, drip_campaign_id, title, start_time, template_id, subject, from_email, from_name, initial,
                     description=None):
         """
         create a single drip campaign node, save to mongo
         return object id
         """
-        new_content = Content(template_id=template_id, subject=subject, from_mail=from_mail, from_name=from_name)
+        new_content = Content(template_id=template_id, subject=subject, from_email=from_email, from_name=from_name)
         new_node = Node(
             drip_campaign_id=drip_campaign_id,
             title=title,
@@ -177,7 +177,7 @@ class DataCaptain:
         new_segment.save()
         name = "%s_seg_%s" % (self.PREFIX, new_segment.id)
         node = Node.objects(id=node_oid)[0]
-        node.update(set__segment_id=new_segment.id)
+        node.update(set__segment_oid=new_segment.id)
         if node["initial"]:
             euids = List.objects(list_id=list_id)[0]["members_euid"]
             segment_id = self.mw.create_segment(list_id, name)
@@ -186,3 +186,23 @@ class DataCaptain:
         else:
             # TODO: shut the fuck up and fucking do it
             pass
+
+    def create_node_campaign(self, node_oid, list_id):
+        """
+        create mailchimp campaign for given node
+        node must be fully processed (we have all content and segment info)
+        returns campaign id
+        """
+        node = Node.objects(id=node_oid)[0]
+        segment = Segment.objects(id=node["segment_oid"])[0]
+        campaign_id = self.mw.create_campaign(
+            list_id=list_id,
+            segment_id=segment["segment_id"],
+            template_id=node["content"]["template_id"],
+            subject=node["content"]["subject"],
+            from_email=node["content"]["from_email"],
+            from_name=node["content"]["from_name"],
+            folder_id=self.folder_id,
+        )
+        node.update(set__campaign_id=campaign_id)
+        return campaign_id
