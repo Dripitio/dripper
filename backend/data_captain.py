@@ -163,9 +163,9 @@ class DataCaptain:
         members_euid = [save_member(mbr) for mbr in self.mw.get_members(list_id)]
         List.objects(list_id=list_id).update(set__members_euid=members_euid)
 
-    def form_segment(self, node_oid, list_id):
+    def form_segment(self, node_oid):
         """
-        for given drip campaign node in the context of list list_id
+        for given drip campaign node
         get the set of applicable members for this node
         and create a segment based on it
         there are two cases:
@@ -177,6 +177,7 @@ class DataCaptain:
         new_segment.save()
         name = "%s_seg_%s" % (self.PREFIX, new_segment.id)
         node = Node.objects(id=node_oid)[0]
+        list_id = DripCampaign.objects(id=node["drip_campaign_id"])[0]["list_id"]
         node.update(set__segment_oid=new_segment.id)
         if node["initial"]:
             euids = List.objects(list_id=list_id)[0]["members_euid"]
@@ -187,13 +188,14 @@ class DataCaptain:
             # TODO: shut the fuck up and fucking do it
             pass
 
-    def create_node_campaign(self, node_oid, list_id):
+    def create_node_campaign(self, node_oid):
         """
         create mailchimp campaign for given node
         node must be fully processed (we have all content and segment info)
         returns campaign id
         """
         node = Node.objects(id=node_oid)[0]
+        list_id = DripCampaign.objects(id=node["drip_campaign_id"])[0]["list_id"]
         segment = Segment.objects(id=node["segment_oid"])[0]
         campaign_id = self.mw.create_campaign(
             list_id=list_id,

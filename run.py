@@ -47,14 +47,14 @@ if __name__ == "__main__":
     for s in dc.mw.mc.lists.static_segments(list_id):
         if s["id"] != 1009:
             dc.mw.delete_segment(list_id, s["id"])
-    dc.form_segment(id1, list_id)
+    dc.form_segment(id1)
 
     s = Segment()
     s.save()
     print s
     print s.id, type(s.id)
 
-    camp_id = dc.create_node_campaign(id1, list_id)
+    camp_id = dc.create_node_campaign(id1)
 
     # dc.send_campaign(camp_id)
 
