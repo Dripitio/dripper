@@ -92,3 +92,9 @@ class MailchimpWrapper:
         }
         response = self.mc.campaigns.create("regular", options, {}, segment_opts)
         return response["id"]
+
+    def send_campaign(self, campaign_id):
+        """
+        send pre-made campaign campaign_id
+        """
+        self.mc.campaigns.send(campaign_id)

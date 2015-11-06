@@ -206,3 +206,9 @@ class DataCaptain:
         )
         node.update(set__campaign_id=campaign_id)
         return campaign_id
+
+    def send_campaign(self, campaign_id):
+        """
+        send campaign campaign_id
+        """
+        self.mw.send_campaign(campaign_id)
