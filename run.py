@@ -56,5 +56,5 @@ if __name__ == "__main__":
 
     camp_id = dc.create_node_campaign(id1, list_id)
 
-    dc.send_campaign(camp_id)
+    # dc.send_campaign(camp_id)
 
