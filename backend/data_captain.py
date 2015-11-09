@@ -220,8 +220,12 @@ class DataCaptain:
             euids = list(euids_all)
 
         # apply the user list to segment n stuff
-        segment_id = self.mw.create_segment(list_id, name)
-        self.mw.update_segment_members(list_id, segment_id, euids)
+        # if user list is empty, save only meta info and don't actually work with mailchimp
+        if len(euids):
+            segment_id = self.mw.create_segment(list_id, name)
+            self.mw.update_segment_members(list_id, segment_id, euids)
+        else:
+            segment_id = None
         new_segment.update(set__segment_id=segment_id, set__name=name, members_euid=euids)
 
     def create_node_campaign(self, node_oid):
