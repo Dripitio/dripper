@@ -52,6 +52,7 @@ class Trigger(Document):
     node_to = ObjectIdField()
     opened = BooleanField()
     clicked = StringField()
+    default = BooleanField()
 
 
 class Member(Document):

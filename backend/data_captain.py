@@ -138,7 +138,7 @@ class DataCaptain:
         new_node.save()
         return new_node.id
 
-    def create_trigger(self, drip_campaign_id, node_from, node_to, opened, clicked):
+    def create_trigger(self, drip_campaign_id, node_from, node_to, opened, clicked, default):
         """
         create a single drip campaign trigger link, save to mongo
         """
@@ -148,6 +148,7 @@ class DataCaptain:
             node_to=node_to,
             opened=opened,
             clicked=clicked,
+            default=default,
         )
         new_trigger.save()
 
@@ -187,14 +188,35 @@ class DataCaptain:
         else:
             prev_node_ids = [trg["node_from"] for trg in Trigger.objects(node_to=node.id)]
             prev_nodes = {nd.id: nd for nd in Node.objects(id__in=prev_node_ids)}
+            # collect all euids that are triggered for this segment
             euids_all = set()
+            # iterate over all triggers for the node
             for trg in Trigger.objects(node_to=node.id):
+                # check which users from source node opened email
                 if trg["opened"]:
                     euids_opened = self.mw.get_open_report(prev_nodes[trg["node_from"]]["campaign_id"])
                     euids_all.update(set(euids_opened))
+                # check which users from source node clicked on the specific link
                 elif trg["clicked"]:
                     euids_clicked = self.mw.get_click_report(prev_nodes[trg["node_from"]]["campaign_id"], trg["clicked"])
                     euids_all.update(set(euids_clicked))
+                # check which users from source node didn't rise any of the other
+                # triggers for the source node
+                # (get all users that raise some trigger for the source node,
+                #  then subtract them from the whole source node user set)
+                elif trg["default"]:
+                    euids_bad = set()
+                    for trg2 in Trigger.objects(node_from=trg["node_from"]):
+                        if trg2["opened"]:
+                            euids_opened = self.mw.get_open_report(prev_nodes[trg2["node_from"]]["campaign_id"])
+                            euids_bad.update(set(euids_opened))
+                        elif trg2["clicked"]:
+                            euids_clicked = self.mw.get_click_report(prev_nodes[trg2["node_from"]]["campaign_id"], trg2["clicked"])
+                            euids_bad.update(set(euids_clicked))
+                    source_segment_oid = prev_nodes[trg["node_from"]]["segment_oid"]
+                    source_euids = Segment.objects(id=source_segment_oid)[0]["members_euid"]
+                    euids_good = set(source_euids) - euids_bad
+                    euids_all.update(euids_good)
             euids = list(euids_all)
 
         # apply the user list to segment n stuff
