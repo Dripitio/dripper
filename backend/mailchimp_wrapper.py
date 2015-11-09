@@ -98,3 +98,19 @@ class MailchimpWrapper:
         send pre-made campaign campaign_id
         """
         self.mc.campaigns.send(campaign_id)
+
+    def get_open_report(self, campaign_id):
+        """
+        returns a list of euids for people who have opened the email of given campaign
+        """
+        return [op["member"]["euid"] for op in self.mc.reports.opened(campaign_id)["data"]]
+
+    def get_click_report(self, campaign_id, url):
+        """
+        returns a list of euids for people who have click the given url in the mail of given campaign
+        """
+        for clicks_tot in self.mc.reports.clicks(campaign_id)["total"]:
+            if clicks_tot["url"] == url:
+                return [clicks_detailed["member"]["euid"] for clicks_detailed
+                        in self.mc.reports.click_detail(campaign_id, clicks_tot["tid"])["data"]]
+        return []

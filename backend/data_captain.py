@@ -173,20 +173,34 @@ class DataCaptain:
         2. node is not initial node - gather the set based on segments of
            previous nodes by applying the trigger filters
         """
+        # init empty segment
         new_segment = Segment()
         new_segment.save()
         name = "%s_seg_%s" % (self.PREFIX, new_segment.id)
         node = Node.objects(id=node_oid)[0]
         list_id = DripCampaign.objects(id=node["drip_campaign_id"])[0]["list_id"]
         node.update(set__segment_oid=new_segment.id)
+
+        # get the list of users depending on triggers
         if node["initial"]:
             euids = List.objects(list_id=list_id)[0]["members_euid"]
-            segment_id = self.mw.create_segment(list_id, name)
-            self.mw.update_segment_members(list_id, segment_id, euids)
-            new_segment.update(set__segment_id=segment_id, set__name=name, members_euid=euids)
         else:
-            # TODO: shut the fuck up and fucking do it
-            pass
+            prev_node_ids = [trg["node_from"] for trg in Trigger.objects(node_to=node.id)]
+            prev_nodes = {nd.id: nd for nd in Node.objects(id__in=prev_node_ids)}
+            euids_all = set()
+            for trg in Trigger.objects(node_to=node.id):
+                if trg["opened"]:
+                    euids_opened = self.mw.get_open_report(prev_nodes[trg["node_from"]]["campaign_id"])
+                    euids_all.update(set(euids_opened))
+                elif trg["clicked"]:
+                    euids_clicked = self.mw.get_click_report(prev_nodes[trg["node_from"]]["campaign_id"], trg["clicked"])
+                    euids_all.update(set(euids_clicked))
+            euids = list(euids_all)
+
+        # apply the user list to segment n stuff
+        segment_id = self.mw.create_segment(list_id, name)
+        self.mw.update_segment_members(list_id, segment_id, euids)
+        new_segment.update(set__segment_id=segment_id, set__name=name, members_euid=euids)
 
     def create_node_campaign(self, node_oid):
         """
