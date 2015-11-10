@@ -99,18 +99,27 @@ class MailchimpWrapper:
         """
         self.mc.campaigns.send(campaign_id)
 
-    def get_open_report(self, campaign_id):
+    def get_member_activity(self, campaign_id, euids):
         """
-        returns a list of euids for people who have opened the email of given campaign
+        return description of activities (opens, clicks) for all given users in campaign
         """
-        return [op["member"]["euid"] for op in self.mc.reports.opened(campaign_id)["data"]]
+        # we have to batch by 5 users
+        batches = [[{"euid": euid} for euid in euids[i: i+50]] for i in xrange(0, len(euids), 50)]
+        res = []
+        # call api for each batch, take only euid and the actual activity list
+        for batch in batches:
+            member_activity = self.mc.reports.member_activity(campaign_id, batch)["data"]
+            res.extend([{"activity": ma["activity"], "euid": ma["member"]["euid"]} for ma in member_activity])
+        return res
 
-    def get_click_report(self, campaign_id, url):
+    def get_default_content_params(self, list_id):
         """
-        returns a list of euids for people who have click the given url in the mail of given campaign
+        returns list-specific default mail content params:
+        from name, from email address, and subject line
         """
-        for clicks_tot in self.mc.reports.clicks(campaign_id)["total"]:
-            if clicks_tot["url"] == url:
-                return [clicks_detailed["member"]["euid"] for clicks_detailed
-                        in self.mc.reports.click_detail(campaign_id, clicks_tot["tid"])["data"]]
-        return []
+        lst = self.mc.lists.list({"list_id": list_id})["data"][0]
+        return {
+            "default_from_email": lst["default_from_email"],
+            "default_from_name": lst["default_from_name"],
+            "default_subject": lst["default_subject"],
+        }
