@@ -97,3 +97,26 @@ if __name__ == "__main__":
         print "sending camp_id:", camp_id
         if camp_id is not None:
             dc.send_campaign(camp_id)
+
+    import datetime
+    def process_campaigns():
+        now = datetime.datetime.now()
+        # iterate over all active drip campaigns
+        for drip_campaign in DripCampaign.objects(active=True):
+            # initialize data captain for this shop
+            dc = DataCaptain(drip_campaign["shop_url"], mw)
+            dc.update_lists()
+            dc.get_folder()
+            # update lists
+            dc.fetch_members_for_list(drip_campaign["list_id"])
+            # iterate over all unprocessed drip campaign's nodes that have already surpassed start_time
+            for node in list(Node.objects(drip_campaign_id=drip_campaign.id, done=False, start_time__lte=now)):
+                # create user segment for the node
+                dc.form_segment(node.id)
+                # prepare a mailchimp campaign for the node
+                mc_campaign_id = dc.create_node_campaign(node.id)
+                # if successful, send the emails
+                if mc_campaign_id is not None:
+                    dc.send_campaign(mc_campaign_id)
+                # mark node as processed
+                node.update(set__done=True)
