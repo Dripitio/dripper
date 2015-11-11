@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from backend.data_captain import DataCaptain
 from backend.model import DripCampaign, Node
 
@@ -10,7 +10,7 @@ def process_campaigns(mw):
     (start time in the past but nod processed yet)
     form segments for the nodes, send emails, makrs nodes as done
     """
-    now = datetime.datetime.now()
+    now = datetime.utcnow()
     print "it's", now, "now! checking drip campaigns.."
     # iterate over all active drip campaigns
     for drip_campaign in DripCampaign.objects(active=True):

@@ -25,6 +25,7 @@ if __name__ == "__main__":
     #     print lst["name"], lst["list_id"]
 
     list_id = "7e091ed411"  # reachly
+    list_id = "9f67333bf5"  # test
     dc.fetch_members_for_list(list_id)
 
 
@@ -63,7 +64,7 @@ if __name__ == "__main__":
     # dc.create_trigger(camp_id, id1, id3, None, None, True)
 
     import datetime
-    now = datetime.datetime.now()
+    now = datetime.datetime.utcnow()
     a_bit_later = now + datetime.timedelta(seconds=150)
     id1 = dc.create_node(camp_id, "main node", now, 9597, subject,
                          from_email, from_name, True, "send links")
