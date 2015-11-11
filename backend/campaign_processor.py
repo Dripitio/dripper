@@ -35,5 +35,5 @@ def process_campaigns(mw):
                 print "   ", "   ", "sending node emails"
                 dc.send_campaign(mc_campaign_id)
             # mark node as processed
-            node.update(set__done=True)
+            node.update(set__done=True, set__updated_at=datetime.utcnow())
             print "   ", "   ", "node processing finished!"
