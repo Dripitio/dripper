@@ -1,5 +1,6 @@
 from mongoengine import Document, IntField, StringField, BooleanField, ListField, \
-    ObjectIdField, DateTimeField, EmbeddedDocument, EmbeddedDocumentField
+    ObjectIdField, DateTimeField, EmbeddedDocument, EmbeddedDocumentField, signals
+from datetime import datetime
 
 
 class List(Document):
@@ -8,6 +9,9 @@ class List(Document):
     list_id = StringField()
     active = BooleanField()
     members_euid = ListField(StringField())
+
+    created_at = DateTimeField()
+    updated_at = DateTimeField()
 
 
 class Template(Document):
@@ -18,6 +22,8 @@ class Template(Document):
     links = ListField(StringField())
     active = BooleanField()
 
+    created_at = DateTimeField()
+    updated_at = DateTimeField()
 
 class DripCampaign(Document):
     shop_url = StringField()
@@ -25,6 +31,9 @@ class DripCampaign(Document):
     description = StringField()
     list_id = StringField()
     active = BooleanField()
+
+    created_at = DateTimeField()
+    updated_at = DateTimeField()
 
 
 class Content(EmbeddedDocument):
@@ -45,6 +54,9 @@ class Node(Document):
     segment_oid = ObjectIdField()
     campaign_id = StringField()
 
+    created_at = DateTimeField()
+    updated_at = DateTimeField()
+
 
 class Trigger(Document):
     drip_campaign_id = ObjectIdField()
@@ -54,13 +66,30 @@ class Trigger(Document):
     clicked = StringField()
     default = BooleanField()
 
+    created_at = DateTimeField()
+    updated_at = DateTimeField()
+
 
 class Member(Document):
     email = StringField()
     member_id = StringField()
+
+    created_at = DateTimeField()
+    updated_at = DateTimeField()
 
 
 class Segment(Document):
     segment_id = IntField()
     name = StringField()
     members_euid = ListField(StringField())
+
+    created_at = DateTimeField()
+    updated_at = DateTimeField()
+
+
+# set presave signal to always set creation time on first save
+def set_create_time(sender, document, **kwargs):
+    now = datetime.utcnow()
+    document.created_at = now
+    document.updated_at = now
+signals.pre_save.connect(set_create_time)

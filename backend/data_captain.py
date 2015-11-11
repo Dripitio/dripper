@@ -6,6 +6,8 @@ from BeautifulSoup import BeautifulSoup as soup
 from backend.model import List, Template, DripCampaign, Node, Content, Trigger, \
     Member, Segment
 
+from datetime import datetime
+
 
 class DataCaptain:
 
@@ -27,9 +29,10 @@ class DataCaptain:
         current_list_ids = set([lst["list_id"] for lst in current_lists])
         previous_list_ids = set([lst["list_id"] for lst in List.objects(shop_url=self.shop_url)])
         # set active:false to all not in current set
-        List.objects(list_id__in=list(previous_list_ids-current_list_ids)).update(set__active=False)
+        List.objects(list_id__in=list(previous_list_ids-current_list_ids)).update(set__active=False,
+                                                                                  set__updated_at=datetime.utcnow())
         # delete duplicates
-        List.objects(list_id__in=list(previous_list_ids&current_list_ids)).delete()
+        List.objects(list_id__in=list(previous_list_ids & current_list_ids)).delete()
         # save all new lsits
         for lst in current_lists:
             new_list = List(shop_url=self.shop_url, name=lst["name"], list_id=lst["list_id"], active=True,
@@ -47,7 +50,8 @@ class DataCaptain:
         current_template_ids = set([tmplt["template_id"] for tmplt in current_templates])
         previous_template_ids = set([tmplt["template_id"] for tmplt in Template.objects(shop_url=self.shop_url)])
         # set active:false to all not in current set
-        Template.objects(template_id__in=list(previous_template_ids-current_template_ids)).update(set__active=False)
+        Template.objects(template_id__in=list(previous_template_ids-current_template_ids)).update(set__active=False,
+                                                                                                  set__updated_at=datetime.utcnow())
         # delete duplicates
         Template.objects(template_id__in=list(previous_template_ids&current_template_ids)).delete()
         # save all new lsits
@@ -106,13 +110,13 @@ class DataCaptain:
         """
         set campaign with given id to active
         """
-        DripCampaign.objects(id=id).update(set__active=True)
+        DripCampaign.objects(id=id).update(set__active=True, set__updated_at=datetime.utcnow())
 
     def deactivate_drip_campaign(self, id):
         """
         set campaign with given id to inactive
         """
-        DripCampaign.objects(id=id).update(set__active=False)
+        DripCampaign.objects(id=id).update(set__active=False, set__updated_at=datetime.utcnow())
 
     def get_drip_campaigns(self):
         """
@@ -162,10 +166,12 @@ class DataCaptain:
         updates member list for list_id
         """
         def save_member(mbr):
-            Member.objects(member_id=mbr["member_id"]).update_one(upsert=True, set__email=mbr["email"])
+            Member.objects(member_id=mbr["member_id"]).update_one(upsert=True, set__email=mbr["email"],
+                                                                  set__updated_at=datetime.utcnow())
             return mbr["member_id"]
         members_euid = [save_member(mbr) for mbr in self.mw.get_members(list_id)]
-        List.objects(list_id=list_id).update(set__members_euid=members_euid)
+        List.objects(list_id=list_id).update(set__members_euid=members_euid,
+                                             set__updated_at=datetime.utcnow())
 
     def form_segment(self, node_oid):
         """
@@ -183,7 +189,7 @@ class DataCaptain:
         name = "%s_seg_%s" % (self.PREFIX, new_segment.id)
         node = Node.objects(id=node_oid)[0]
         list_id = DripCampaign.objects(id=node["drip_campaign_id"])[0]["list_id"]
-        node.update(set__segment_oid=new_segment.id)
+        node.update(set__segment_oid=new_segment.id, set__updated_at=datetime.utcnow())
 
         # gather all users that apply for this node after triggers on previous nodes
         all_euids = set()
@@ -209,7 +215,8 @@ class DataCaptain:
             self.mw.update_segment_members(list_id, segment_id, all_euids)
         else:
             segment_id = None
-        new_segment.update(set__segment_id=segment_id, set__name=name, members_euid=all_euids)
+        new_segment.update(set__segment_id=segment_id, set__name=name, members_euid=all_euids,
+                           set__updated_at=datetime.utcnow())
 
     def segment_by_triggers(self, node_oid):
         """
@@ -302,7 +309,7 @@ class DataCaptain:
                 from_name=node["content"]["from_name"],
                 folder_id=self.folder_id,
             )
-            node.update(set__campaign_id=campaign_id)
+            node.update(set__campaign_id=campaign_id, set__updated_at=datetime.utcnow())
             return campaign_id
         else:
             return None
