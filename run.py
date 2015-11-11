@@ -21,7 +21,10 @@ if __name__ == "__main__":
     dc.get_folder()
     print "folder:", dc.folder_id
 
-    list_id = "9f67333bf5"
+    # for lst in List.objects():
+    #     print lst["name"], lst["list_id"]
+
+    list_id = "7e091ed411"  # reachly
     dc.fetch_members_for_list(list_id)
 
 
@@ -103,8 +106,8 @@ if __name__ == "__main__":
     #     if camp_id is not None:
     #         dc.send_campaign(camp_id)
 
-    import time
-    dc.activate_drip_campaign(camp_id)
-    while True:
-        process_campaigns(mw)
-        time.sleep(60)
+    # import time
+    # dc.activate_drip_campaign(camp_id)
+    # while True:
+    #     process_campaigns(mw)
+    #     time.sleep(60)
