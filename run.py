@@ -5,6 +5,10 @@ from backend.data_captain import DataCaptain
 from backend.mailchimp_wrapper import MailchimpWrapper
 from backend.model import *
 
+CREATE = 1
+RUN = 2
+TASK = RUN
+
 if __name__ == "__main__":
     api_key = "71f28cb5b4859b0103b2197bfef430c1-us12"
     shop_url = "poop.shopify.com"
@@ -13,79 +17,93 @@ if __name__ == "__main__":
     mongoengine.connect(db_name)
     mw = MailchimpWrapper(api_key)
 
+    if TASK == CREATE:
 
-    dc = DataCaptain(shop_url, mw)
+        dc = DataCaptain(shop_url, mw)
 
-    dc.update_lists()
-    dc.update_templates()
-    dc.get_folder()
-    print "folder:", dc.folder_id
+        dc.update_lists()
+        dc.update_templates()
+        dc.get_folder()
+        print "folder:", dc.folder_id
 
-    # for lst in List.objects():
-    #     print lst["name"], lst["list_id"]
+        # for lst in List.objects():
+        #     print lst["name"], lst["list_id"]
 
-    list_id = "7e091ed411"  # reachly
-    list_id = "9f67333bf5"  # test
-    dc.fetch_members_for_list(list_id)
+        list_id = "7e091ed411"  # reachly
+        list_id = "9f67333bf5"  # test
+        dc.fetch_members_for_list(list_id)
 
 
-    camp_name = "newCampaignYo"
-    DripCampaign.drop_collection()
-    Node.drop_collection()
-    Trigger.drop_collection()
-    print "making campaign %s" % camp_name
+        camp_name = "newCampaignYo"
+        DripCampaign.drop_collection()
+        Node.drop_collection()
+        Trigger.drop_collection()
+        print "making campaign %s" % camp_name
 
-    camp_id = dc.create_drip_campaign(camp_name, list_id, "some description lol")
-    dc.activate_drip_campaign(camp_id)
-    dc.deactivate_drip_campaign(camp_id)
-    print camp_id, type(camp_id)
+        camp_id = dc.create_drip_campaign(camp_name, list_id, "some description lol")
+        dc.activate_drip_campaign(camp_id)
+        # dc.deactivate_drip_campaign(camp_id)
+        print camp_id, type(camp_id)
 
-    default_params = dc.mw.get_default_content_params(list_id)
-    print default_params
-    from_email = default_params["default_from_email"]
-    from_name = default_params["default_from_name"]
-    subject = default_params["default_subject"]
-    subject = "Hello from Mars!"
+        default_params = dc.mw.get_default_content_params(list_id)
+        print default_params
+        from_email = default_params["default_from_email"]
+        from_name = default_params["default_from_name"]
+        subject = default_params["default_subject"]
+        subject = "Hello from Mars!"
 
-    # template_id = 9597
-    #
-    # print Template.objects(template_id=template_id)[0]["links"]
-    #
-    # import datetime
-    # id1 = dc.create_node(camp_id, "first node", datetime.datetime(2015, 12, 1), template_id, subject,
-    #                      from_email, from_name, True, "describe1")
-    # id2 = dc.create_node(camp_id, "second node", datetime.datetime(2015, 12, 10), template_id, subject,
-    #                      from_email, from_name, False, "describe2")
-    # id3 = dc.create_node(camp_id, "third node", datetime.datetime(2015, 12, 10), template_id, subject,
-    #                      from_email, from_name, False, "describe3")
-    # # dc.create_trigger(camp_id, id1, id2, True, None)
-    # # dc.create_trigger(camp_id, id1, id2, False, None)
-    # dc.create_trigger(camp_id, id1, id2, None, "http://www.baidu.com/", None)
-    # dc.create_trigger(camp_id, id1, id3, None, None, True)
+        # template_id = 9597
+        #
+        # print Template.objects(template_id=template_id)[0]["links"]
+        #
+        # import datetime
+        # id1 = dc.create_node(camp_id, "first node", datetime.datetime(2015, 12, 1), template_id, subject,
+        #                      from_email, from_name, True, "describe1")
+        # id2 = dc.create_node(camp_id, "second node", datetime.datetime(2015, 12, 10), template_id, subject,
+        #                      from_email, from_name, False, "describe2")
+        # id3 = dc.create_node(camp_id, "third node", datetime.datetime(2015, 12, 10), template_id, subject,
+        #                      from_email, from_name, False, "describe3")
+        # # dc.create_trigger(camp_id, id1, id2, True, None)
+        # # dc.create_trigger(camp_id, id1, id2, False, None)
+        # dc.create_trigger(camp_id, id1, id2, None, "http://www.baidu.com/", None)
+        # dc.create_trigger(camp_id, id1, id3, None, None, True)
 
-    import datetime
-    now = datetime.datetime.utcnow()
-    a_bit_later = now + datetime.timedelta(seconds=150)
-    id1 = dc.create_node(camp_id, "main node", now, 9597, subject,
-                         from_email, from_name, True, "send links")
-    id2 = dc.create_node(camp_id, "open node", a_bit_later, 9617, subject,
-                         from_email, from_name, False, "when only opened (or duckduck)")
-    id3 = dc.create_node(camp_id, "google/bing node", a_bit_later, 9621, subject,
-                         from_email, from_name, False, "when clicked google or bing")
-    id4 = dc.create_node(camp_id, "baidu node", a_bit_later, 9625, subject,
-                         from_email, from_name, False, "when clicked baidu")
-    id5 = dc.create_node(camp_id, "default node", a_bit_later, 9629, subject,
-                         from_email, from_name, False, "when not even opened")
-    dc.create_trigger(camp_id, id1, id2, True, None, None)
-    dc.create_trigger(camp_id, id1, id3, None, "https://www.google.com/", None)
-    dc.create_trigger(camp_id, id1, id3, None, "http://www.bing.com/", None)
-    dc.create_trigger(camp_id, id1, id4, None, "http://www.baidu.com/", None)
-    dc.create_trigger(camp_id, id1, id5, None, None, True)
+        import datetime
+        now = datetime.datetime.utcnow()
+        a_bit_later = now + datetime.timedelta(seconds=150)
+        id1 = dc.create_node(camp_id, "main node", now, 9597, subject,
+                             from_email, from_name, True, "send links")
+        id2 = dc.create_node(camp_id, "open node", a_bit_later, 9617, subject,
+                             from_email, from_name, False, "when only opened (or duckduck)")
+        id3 = dc.create_node(camp_id, "google/bing node", a_bit_later, 9621, subject,
+                             from_email, from_name, False, "when clicked google or bing")
+        id4 = dc.create_node(camp_id, "baidu node", a_bit_later, 9625, subject,
+                             from_email, from_name, False, "when clicked baidu")
+        id5 = dc.create_node(camp_id, "default node", a_bit_later, 9629, subject,
+                             from_email, from_name, False, "when not even opened")
+        dc.create_trigger(camp_id, id1, id2, True, None, None)
+        dc.create_trigger(camp_id, id1, id3, None, "https://www.google.com/", None)
+        dc.create_trigger(camp_id, id1, id3, None, "http://www.bing.com/", None)
+        dc.create_trigger(camp_id, id1, id4, None, "http://www.baidu.com/", None)
+        dc.create_trigger(camp_id, id1, id5, None, None, True)
 
-    # clean up old segments
-    for s in dc.mw.mc.lists.static_segments(list_id):
-        if s["id"] != 1009:
-            dc.mw.delete_segment(list_id, s["id"])
+        # clean up old segments
+        for s in dc.mw.mc.lists.static_segments(list_id):
+            if s["id"] != 1009:
+                dc.mw.delete_segment(list_id, s["id"])
+
+    elif TASK == RUN:
+        import logging
+        from logging.handlers import RotatingFileHandler
+        file_handler = RotatingFileHandler(filename="nice.log")
+        logger = logging.getLogger(name="nice")
+        logger.addHandler(file_handler)
+        logger.setLevel(logging.INFO)
+
+        import time
+        while True:
+            process_campaigns(mw, logger)
+            time.sleep(60)
 
 
     # # get node ids
@@ -107,8 +125,3 @@ if __name__ == "__main__":
     #     if camp_id is not None:
     #         dc.send_campaign(camp_id)
 
-    # import time
-    # dc.activate_drip_campaign(camp_id)
-    # while True:
-    #     process_campaigns(mw)
-    #     time.sleep(60)
