@@ -8,7 +8,7 @@ def process_campaigns(mw):
     processes all campaigns
     looks for nodes that have to be processed
     (start time in the past but nod processed yet)
-    form segments for the nodes, send emails, makrs nodes as done
+    form segments for the nodes, send emails, makes nodes as done
     """
     now = datetime.utcnow()
     print "it's", now, "now! checking drip campaigns.."
